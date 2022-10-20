@@ -1,45 +1,26 @@
 <script>
-  import svelteLogo from './assets/svelte.svg'
-  import Counter from './lib/Counter.svelte'
+    let page = 'home';
+    import Game from './lib/Game.svelte';
 </script>
 
-<main>
-  <div>
-    <a href="https://vitejs.dev" target="_blank"> 
-      <img src="/vite.svg" class="logo" alt="Vite Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank"> 
-      <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-    </a>
-  </div>
-  <h1>Vite + Svelte</h1>
+{#if page == 'home'}
+    <main class="flex flex-col items-center mx-auto w-full">
+        <h1>Homepage</h1>
 
-  <div class="card">
-    <Counter />
-  </div>
+        <div class="flex flex-col gap-y-4 mt-12 w-full">
+            <button on:click={_ => (page = '1')}>Exercise 1</button>
 
-  <p>
-    Check out <a href="https://github.com/sveltejs/kit#readme" target="_blank">SvelteKit</a>, the official Svelte app framework powered by Vite!
-  </p>
+            <button on:click={_ => (page = '2')}>Exercise 2</button>
 
-  <p class="read-the-docs">
-    Click on the Vite and Svelte logos to learn more
-  </p>
-</main>
+            <button on:click={_ => (page = '3')}>Exercise 3</button>
+        </div>
+    </main>
+{:else}
+    <Game {page} />
+{/if}
 
 <style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-  }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
-  }
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
-  }
-  .read-the-docs {
-    color: #888;
-  }
+    button {
+        @apply border-2 text-2xl border-slate-500 p-5;
+    }
 </style>
