@@ -1,22 +1,8 @@
 <script>
-    import P5 from 'p5-svelte';
-    // import Game1 from "./src/lib/Game1";
+    import Game1 from "./games/Game1.svelte";
   
     export let page;
 
-    let canvas;
-    let width = 55;
-    let height = 55;
-
-    const sketch = p5 => {
-        p5.setup = () => {
-            p5.createCanvas(400, 400);
-        };
-
-        p5.draw = () => {
-            p5.ellipse(p5.width / 2, p5.height / 2, width, height);
-        };
-    };
 </script>
 
   <h1 class="mb-12">
@@ -29,33 +15,17 @@
           <button on:click={_ => (page = 0)}>Home</button>
           {#each {length:3} as _, i}
             {#if page!=i+1}
-            <button on:click={_ => (page = (i+1))}>Exercise {i+1}</button>
+            <button disabled={i!=0} on:click={_ => (page = (i+1))}>Exercise {i+1}</button>
           {/if}
           {/each}
         </div>
     </div>
 
   <div class="w-96 h-96 bg-slate-500 grid place-items-center" >
-    Game {page} Placeholder
+    <Game1/>
   </div>
 
-<!--   <div>
-    <div>
-        <label>
-            Width
-            <input type="range" bind:value={width} min="100" max="1000" step="0.01" />
-            {width}
-        </label>
 
-        <label class="block">
-            Height
-            <input type="range" bind:value={height} min="100" max="1000" step="0.01" />
-            {height}
-        </label>
-
-        <P5 {sketch} />
-    </div>
-  </div> -->
   
 </div>
 <div>

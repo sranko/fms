@@ -1,5 +1,5 @@
 <script>
-    let page = 0;
+    let page = 1;
     import Game from './lib/GameGUI.svelte';
 
 </script>
@@ -9,11 +9,9 @@
         <h1>Homepage</h1>
 
         <div class="flex flex-col gap-y-4 mt-12 w-full">
-            <button on:click={_ => (page = 1)}>Exercise 1</button>
-
-            <button on:click={_ => (page = 2)}>Exercise 2</button>
-
-            <button on:click={_ => (page = 3)}>Exercise 3</button>
+          {#each {length: 3} as _, i}
+            <button disabled={i!=0} on:click={_ => (page = i+1)}>Exercise {i+1}</button>
+          {/each}
         </div>
     </main>
 {:else}
@@ -22,6 +20,5 @@
 
 <style>
     button {
-        @apply border-2 text-2xl border-slate-500 p-5;
     }
 </style>

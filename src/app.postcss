@@ -86,3 +86,14 @@ button:focus-visible {
 @tailwind components;
 
 @tailwind utilities;
+
+
+@layer components{
+button {
+  @apply disabled:text-gray-600 border text-2xl border-slate-500 p-5;
+
+}
+button:disabled:after {
+  content: " *WIP*"
+}
+}
