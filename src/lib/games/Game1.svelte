@@ -1,7 +1,7 @@
 <script>
     import P5 from 'p5-svelte';
 
-  export const letters = "abcdefghijklmnopqrstuvwxyz".toUppercase().split()
+  export const letters = "abcdefghijklmnopqrstuvwxyz".split()
 
      const sketch = (p5) => {
     let x = 0;
