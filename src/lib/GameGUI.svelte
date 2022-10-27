@@ -63,7 +63,21 @@
     <h2>
       How to play
     </h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec congue aliquet massa ac gravida. Fusce ipsum diam, cursus a posuere in, interdum vel risus. Duis non malesuada mauris, vel tincidunt erat. Donec ut tellus non arcu iaculis volutpat at quis urna. Integer elit metus, posuere sed pharetra quis, fringilla et nibh. Quisque accumsan neque id varius fringilla. Aliquam eu lectus non dui egestas molestie. Nunc faucibus ornare dictum. Quisque pulvinar sem felis, eu lacinia velit tempor ac. Morbi magna neque, finibus quis urna vel, elementum posuere dolor.</p>
+    <ul>
+
+      <li>
+              Use the mouse to trace the letter displayed on the screen.
+      </li>
+      <li>
+Stay on the line as best as you can for full points
+        
+      </li>
+      <li>
+Complete in a timely manner for full points
+        
+      </li>
+      
+    </ul>
   </div>
 </div>
 
