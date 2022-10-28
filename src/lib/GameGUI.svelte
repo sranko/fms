@@ -20,8 +20,13 @@
         </div>
     </div>
 
-    <div class="bg-slate-500 grid place-items-center">
-        <Game1 />
+    <div class="bg-black grid place-items-center relative">
+        <div class="col-start-1 row-start-1">
+            <Game1 />
+        </div>
+        <!-- <div class="hud w-full h-full bg-red-500 col-start-1 row-start-1  grid "> -->
+        <!-- <button class="mt-auto ml-auto">full</button> -->
+        <!-- </div> -->
     </div>
 </div>
 <div>
