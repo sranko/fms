@@ -133,6 +133,10 @@
                         // }
                         // p.circle(x, y, 10);
                     } else {
+                        if (p.pixels[i] !== 0) {
+                            continue;
+                        }
+                        // console.log(p.pixels[i]);
                         // continue;
                         let red = p.color(100, 200, 200, 10);
                         let green = p.color(200, 200, 100, 80);
