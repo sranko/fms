@@ -7,7 +7,7 @@
     import { cubicOut } from 'svelte/easing';
 
     export let CANVAS_SIZE = 500;
-    const LETTERS = 'bcdefhiklnoprstuvwxyz'.toUpperCase().split('');
+    const LETTERS = 'bcdefhiklnoprstuvxyz'.toUpperCase().split('');
     const MAX_ROUND_POINTS = 1000;
     const MIN_ROUND_POINTS = 600;
     const POINT_DRAIN_AMOUNT = 100;
@@ -116,7 +116,7 @@
                         let red = p.color(200, 100, 100, 150);
                         let green = p.color(100, 200, 200, 150);
 
-                        if (nearest(x, y, 25)) {
+                        if (nearest(x, y, 30)) {
                             p.fill(green);
                             p.circle(x, y, 5);
                         } else {
