@@ -6,7 +6,7 @@
     import { tweened, spring } from 'svelte/motion';
     import { cubicOut } from 'svelte/easing';
 
-    export let CANVAS_SIZE = 400;
+    export let CANVAS_SIZE = 500;
     const LETTERS = 'bcdefhiklnoprstuvwxyz'.toUpperCase().split('');
     const MAX_ROUND_POINTS = 1000;
     const MIN_ROUND_POINTS = 600;
@@ -166,7 +166,7 @@
 
         const drawLetter = () => {
             const letterColor = p.color(214, 255, 255, 100);
-            const size = 400;
+            const size = 500;
             p.textAlign(p.CENTER, p.CENTER);
             p.textSize(size);
             // p.textFont('Lato');
@@ -175,13 +175,13 @@
             p.fill(letterColor);
             p.textStyle(p.BOLD);
 
-            p.text(currentLetter, 200, 200);
+            p.text(currentLetter, p.width / 2, p.height / 2);
 
             p.fill(193, 50, 50);
             p.textSize(size * 0.85);
             p.textStyle(p.NORMAL);
 
-            p.text(currentLetter, 200, 200);
+            p.text(currentLetter, p.width / 2, p.height / 2);
         };
 
         const drawPointsBar = () => {
