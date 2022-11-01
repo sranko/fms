@@ -7,33 +7,39 @@
     import { cubicOut } from 'svelte/easing';
 
     export let CANVAS_SIZE = 400;
-    const letters = 'abcdefghijklmnopqrstuvwxyz'.toUpperCase().split('');
+    const LETTERS = 'bcdefhiklnoprstuvwxyz'.toUpperCase().split('');
     const MAX_ROUND_POINTS = 1000;
     const MIN_ROUND_POINTS = 600;
-    const POINT_DRAIN_AMOUNT = 50;
-    const POINT_DRAIN_DELAY = 2000; // miliseconds
+    const POINT_DRAIN_AMOUNT = 100;
+    const POINT_DRAIN_DELAY = 1500; // miliseconds
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
 
     let level = 0;
-    let currentLetter = letters[1];
+    $: currentLetter = LETTERS[level];
     let currentRoundPoints = MAX_ROUND_POINTS;
 
-    const trailPoints = [{ x: 0, y: 0, size: 0 }];
+    let trailPoints = [{ x: 0, y: 0, size: 0 }];
 
     function nextLevel(params) {
         level++;
+        trailPoints = [{ x: 0, y: 0, size: 0 }];
     }
 
     // Point drainer
     const slugCurrentRoundPoints = spring(0, {
-        stiffness: 0.15,
-        damping: 0.45,
+        stiffness: 0.3,
+        damping: 0.7,
         // duration: 1500,
         // easing: cubicOut,
     });
-    const drainPointsInterval = setInterval(() => {
+    const drainPointsInterval = setInterval(async () => {
         if (currentRoundPoints - POINT_DRAIN_AMOUNT < MIN_ROUND_POINTS) {
             currentRoundPoints -= currentRoundPoints - MIN_ROUND_POINTS;
-            return clearInterval(drainPointsInterval);
+            currentRoundPoints = MAX_ROUND_POINTS + POINT_DRAIN_AMOUNT;
+            nextLevel();
+            await sleep(POINT_DRAIN_DELAY);
+            // return clearInterval(drainPointsInterval);
         }
         currentRoundPoints -= POINT_DRAIN_AMOUNT;
     }, POINT_DRAIN_DELAY);
@@ -71,7 +77,8 @@
             for (let i = 0; i < trailPoints.length; i++) {
                 const point = trailPoints[i];
 
-                p.circle(point.x, point.y, point.size);
+                // p.circle(point.x, point.y, point.size);
+
                 // if (point.size <= 0 && trailPoints.length > 0) trailPoints.shift();
                 // if (point.size > 0) point.size -= 2;
                 // if (i === 0) return;
@@ -104,10 +111,10 @@
                     const i = 4 * d * (y * d * p.width + x);
 
                     // if (x % 10 == 0 && y % 10 == 0) {
-                    if (p.pixels[i] === 255) {
+                    if (p.pixels[i] === 193) {
                         // targets.push({ x, y });
-                        let red = p.color(200, 100, 100, 50);
-                        let green = p.color(100, 200, 100, 50);
+                        let red = p.color(200, 100, 100, 150);
+                        let green = p.color(100, 200, 200, 150);
 
                         if (nearest(x, y)) {
                             p.fill(green);
@@ -115,12 +122,22 @@
                             p.fill(red);
                         }
 
-                        p.circle(x, y, 20);
+                        p.circle(x, y, 5);
+                    } else if (p.pixels[i] === 214) {
+                        // let red = p.color(200, 100, 100, 50);
+                        // let green = p.color(100, 200, 100, 50);
+                        // if (nearest(x, y)) {
+                        //     p.fill(green);
+                        // } else {
+                        //     p.fill(red);
+                        // }
+                        // p.circle(x, y, 10);
                     } else {
-                        let red = p.color(100, 100, 200, 10);
-                        let green = p.color(300, 100, 100, 80);
+                        // continue;
+                        let red = p.color(100, 200, 200, 10);
+                        let green = p.color(200, 200, 100, 80);
 
-                        if (nearest(x, y)) {
+                        if (nearest(x, y, 5)) {
                             p.fill(green);
                         } else {
                             p.fill(red);
@@ -135,20 +152,31 @@
             return;
         };
 
-        const nearest = (x, y) => {
+        const nearest = (x, y, radius = 20) => {
             for (let i = 0; i < trailPoints.length; i++) {
                 const point = trailPoints[i];
-                if (dist({ x, y }, point) < 10) {
+                if (dist({ x, y }, point) < radius) {
                     return trailPoints[i];
                 }
             }
         };
 
         const drawLetter = () => {
-            const letterColor = p.color(255, 255, 255, 60);
-            p.textSize(300);
+            const letterColor = p.color(214, 255, 255, 100);
+            const size = 400;
             p.textAlign(p.CENTER, p.CENTER);
+            p.textSize(size);
+            // p.textFont('Lato');
+            p.textFont('Work Sans');
+
             p.fill(letterColor);
+            p.textStyle(p.BOLD);
+
+            p.text(currentLetter, 200, 200);
+
+            p.fill(193, 50, 50);
+            p.textSize(size * 0.85);
+            p.textStyle(p.NORMAL);
 
             p.text(currentLetter, 200, 200);
         };
@@ -177,11 +205,19 @@
             p.text(currentRoundPoints, end, 0);
         };
 
+        let fontRegular, fontItalic, fontBold;
+        p.preload = async () => {
+            // fontRegular = p.loadFont('assets/Regular.otf');
+            // fontItalic = p.loadFont('assets/Italic.ttf');
+            // fontBold = p.loadFont('assets/Bold.ttf');
+        };
+
         p.setup = async () => {
             p.createCanvas(CANVAS_SIZE, CANVAS_SIZE);
             p.clear(0, 0, 0, 0);
             drawLetter();
-            scanLetter();
+            // setInterval(nextLevel, 1000);
+            // scanLetter();
         };
 
         p.draw = () => {
