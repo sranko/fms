@@ -28,8 +28,8 @@
 
     // Point drainer
     const slugCurrentRoundPoints = spring(0, {
-        stiffness: 0.3,
-        damping: 0.7,
+        stiffness: 0.1,
+        damping: 0.5,
         // duration: 1500,
         // easing: cubicOut,
     });
@@ -116,13 +116,12 @@
                         let red = p.color(200, 100, 100, 150);
                         let green = p.color(100, 200, 200, 150);
 
-                        if (nearest(x, y)) {
+                        if (nearest(x, y, 25)) {
                             p.fill(green);
+                            p.circle(x, y, 5);
                         } else {
                             p.fill(red);
                         }
-
-                        p.circle(x, y, 5);
                     } else if (p.pixels[i] === 214) {
                         // let red = p.color(200, 100, 100, 50);
                         // let green = p.color(100, 200, 100, 50);
@@ -141,12 +140,12 @@
                         let red = p.color(100, 200, 200, 10);
                         let green = p.color(200, 200, 100, 80);
 
-                        if (nearest(x, y, 5)) {
+                        if (nearest(x, y, 4)) {
                             p.fill(green);
+                            p.circle(x, y, 20);
                         } else {
                             p.fill(red);
                         }
-                        p.circle(x, y, 20);
                     }
                 }
             }
