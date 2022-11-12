@@ -1,5 +1,5 @@
 <script>
-    /** @type { import('p5-svelte/types').p5 } TypeScript syntax */
+    /** @type { import('p5-svelte/types').p5 } */
     import P5 from 'p5-svelte';
     import { onDestroy, onMount, tick } from 'svelte';
 
@@ -11,7 +11,7 @@
     const MAX_ROUND_POINTS = 1000;
     const MIN_ROUND_POINTS = 600;
     const POINT_DRAIN_AMOUNT = 100;
-    const POINT_DRAIN_DELAY = 1500; // miliseconds
+    const POINT_DRAIN_DELAY = 2000; // miliseconds
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -20,31 +20,45 @@
     let currentRoundPoints = MAX_ROUND_POINTS;
 
     let trailPoints = [{ x: 0, y: 0, size: 0 }];
+    let skeletonPoints = [{ x: 0, y: 0, bone: false }];
+    let boneCount = 0;
 
-    function nextLevel(params) {
+    let nextLevelP5;
+
+    async function nextLevel(params) {
         level++;
         trailPoints = [{ x: 0, y: 0, size: 0 }];
+        boneCount = 0;
+
+        console.log('Next level');
+
+        await tick();
+        nextLevelP5();
     }
 
     // Point drainer
-    const slugCurrentRoundPoints = spring(0, {
+    const slugCurrentRoundPointsStore = spring(0, {
         stiffness: 0.1,
         damping: 0.5,
         // duration: 1500,
         // easing: cubicOut,
     });
-    const drainPointsInterval = setInterval(async () => {
-        if (currentRoundPoints - POINT_DRAIN_AMOUNT < MIN_ROUND_POINTS) {
-            currentRoundPoints -= currentRoundPoints - MIN_ROUND_POINTS;
-            currentRoundPoints = MAX_ROUND_POINTS + POINT_DRAIN_AMOUNT;
-            nextLevel();
-            await sleep(POINT_DRAIN_DELAY);
-            // return clearInterval(drainPointsInterval);
-        }
-        currentRoundPoints -= POINT_DRAIN_AMOUNT;
-    }, POINT_DRAIN_DELAY);
-    onDestroy(() => {
-        clearInterval(drainPointsInterval);
+
+    onMount(async () => {
+        const drainPointsInterval = setInterval(async () => {
+            if (currentRoundPoints - POINT_DRAIN_AMOUNT < MIN_ROUND_POINTS) {
+                currentRoundPoints -= currentRoundPoints - MIN_ROUND_POINTS;
+                currentRoundPoints = MAX_ROUND_POINTS + POINT_DRAIN_AMOUNT;
+                await nextLevel();
+                await sleep(POINT_DRAIN_DELAY);
+                // return clearInterval(drainPointsInterval);
+            }
+            currentRoundPoints -= POINT_DRAIN_AMOUNT;
+        }, POINT_DRAIN_DELAY);
+
+        return () => {
+            clearInterval(drainPointsInterval);
+        };
     });
 
     // Distance func
@@ -60,24 +74,63 @@
             barBG: p.color(255, 255, 255),
         };
 
-        const drawTrail = () => {
+        const drawTrail = async () => {
             p.noStroke();
 
             if (dist({ x: p.mouseX, y: p.mouseY }, trailPoints.at(-1)) > 5) {
                 // if (!trailPoints.length || dist({ x: p.mouseX, y: p.mouseY }, trailPoints[0]) > 10) {
                 if (p.mouseIsPressed) {
-                    console.log('push' + Math.random().toString().slice(-3, -1));
+                    // console.log('push' + Math.random().toString().slice(-3, -1));
                     trailPoints.push({ x: p.mouseX, y: p.mouseY, size: 10 });
                 }
             }
 
             // trailPoints.push({ x: p.mouseX, y: p.mouseY, size: 40 });
 
+            const red = p.color(200, 100, 100, 120);
+            const green = p.color(100, 200, 200, 40);
+
+            let bonesFilled = 0;
+            let voidFilled = 0;
+
             // render points
             for (let i = 0; i < trailPoints.length; i++) {
                 const point = trailPoints[i];
 
-                // p.circle(point.x, point.y, point.size);
+                let fleshed = false;
+                for (let i = 0; i < skeletonPoints.length; i++) {
+                    // loop over each skeleton point
+                    const skPoint = skeletonPoints[i];
+                    const distance = dist(point, skPoint);
+
+                    if (skPoint.bone) {
+                        // ok so its a bone
+                        if (distance > 50) {
+                            continue;
+                        }
+
+                        bonesFilled++;
+                        p.fill(green);
+                        p.circle(skPoint.x, skPoint.y, 30);
+                    } else {
+                        if (distance < 20) {
+                            fleshed = true;
+                            // we're looking at a piece of flesh
+                            continue;
+                        }
+                        // tighter around flesh
+                        // if (distance < 20) continue;
+                    }
+
+                    if (!fleshed && i === skeletonPoints.length - 1) {
+                        voidFilled++;
+                        p.fill(red);
+                        p.circle(point.x, point.y, 40);
+                    }
+                }
+
+                // p.fill(100, 200, 100);
+                // p.circle(point.x, point.y, 20);
 
                 // if (point.size <= 0 && trailPoints.length > 0) trailPoints.shift();
                 // if (point.size > 0) point.size -= 2;
@@ -92,10 +145,20 @@
 
                 // if (i !== 0) point.size -= dec;
             }
+
+            if (bonesFilled >= boneCount * 0.99) {
+                console.log(bonesFilled, boneCount);
+                console.log(bonesFilled, voidFilled);
+                console.log('COMPLETED');
+                await nextLevel();
+            }
         };
 
+        // return a list of the coordinates for points of the letter skeleton
         const scanLetter = () => {
             const targets = [];
+
+            // console.log('holu');
 
             // canvas has a width
             // has more pixels than canvas units
@@ -106,53 +169,39 @@
             const d = p.pixelDensity();
             p.noStroke();
 
+            boneCount = 0;
+
             for (let x = 0; x < p.width; x += block) {
                 for (let y = 0; y < p.height; y += block) {
                     const i = 4 * d * (y * d * p.width + x);
 
-                    // if (x % 10 == 0 && y % 10 == 0) {
                     if (p.pixels[i] === 193) {
-                        // targets.push({ x, y });
-                        let red = p.color(200, 100, 100, 150);
-                        let green = p.color(100, 200, 200, 150);
+                        targets.push({ x, y, bone: true });
+                        boneCount++;
 
-                        if (nearest(x, y, 30)) {
-                            p.fill(green);
-                            p.circle(x, y, 5);
-                        } else {
-                            p.fill(red);
-                        }
-                    } else if (p.pixels[i] === 214) {
-                        // let red = p.color(200, 100, 100, 50);
-                        // let green = p.color(100, 200, 100, 50);
-                        // if (nearest(x, y)) {
+                        // if (nearest(x, y, 30)) {
                         //     p.fill(green);
+                        //     p.circle(x, y, 5);
                         // } else {
                         //     p.fill(red);
                         // }
-                        // p.circle(x, y, 10);
+                    } else if (p.pixels[i] === 214) {
+                        targets.push({ x, y, bone: false });
                     } else {
-                        if (p.pixels[i] !== 0) {
-                            continue;
-                        }
-                        // console.log(p.pixels[i]);
-                        // continue;
-                        let red = p.color(100, 200, 200, 10);
-                        let green = p.color(200, 200, 100, 80);
-
-                        if (nearest(x, y, 4)) {
-                            p.fill(green);
-                            p.circle(x, y, 20);
-                        } else {
-                            p.fill(red);
-                        }
+                        // if (p.pixels[i] !== 0) {
+                        //     continue;
+                        // }
+                        // if (nearest(x, y, 4)) {
+                        //     p.fill(green);
+                        //     p.circle(x, y, 20);
+                        // } else {
+                        //     p.fill(red);
+                        // }
                     }
                 }
             }
 
-            // let fullCanvas = 1 * (p.width * d) * (p.height * d);
-
-            return;
+            return targets;
         };
 
         const nearest = (x, y, radius = 20) => {
@@ -164,29 +213,35 @@
             }
         };
 
-        const drawLetter = () => {
-            const letterColor = p.color(214, 255, 255, 100);
+        const drawLetter = (sizeValue = 1) => {
             const size = 500;
+            p.textSize(size * sizeValue);
             p.textAlign(p.CENTER, p.CENTER);
-            p.textSize(size);
+
             // p.textFont('Lato');
             p.textFont('Work Sans');
 
-            p.fill(letterColor);
-            p.textStyle(p.BOLD);
-
             p.text(currentLetter, p.width / 2, p.height / 2);
-
-            p.fill(193, 50, 50);
-            p.textSize(size * 0.85);
-            p.textStyle(p.NORMAL);
 
             p.text(currentLetter, p.width / 2, p.height / 2);
         };
 
+        const drawLetterFlesh = () => {
+            const letterColor = p.color(214, 255, 255, 255);
+            p.fill(letterColor);
+            p.textStyle(p.BOLD);
+            drawLetter();
+        };
+
+        const drawLetterSkeleton = () => {
+            p.fill(193, 50, 50);
+            p.textStyle(p.NORMAL);
+            drawLetter(0.85);
+        };
+
         const drawPointsBar = () => {
-            slugCurrentRoundPoints.set(currentRoundPoints);
-            const end = (($slugCurrentRoundPoints - MIN_ROUND_POINTS) / (MAX_ROUND_POINTS - MIN_ROUND_POINTS)) * p.width;
+            slugCurrentRoundPointsStore.set(currentRoundPoints);
+            const end = (($slugCurrentRoundPointsStore - MIN_ROUND_POINTS) / (MAX_ROUND_POINTS - MIN_ROUND_POINTS)) * p.width;
 
             const barWidth = 15;
             p.fill(COLORS.barBG);
@@ -209,6 +264,7 @@
         };
 
         let fontRegular, fontItalic, fontBold;
+
         p.preload = async () => {
             // fontRegular = p.loadFont('assets/Regular.otf');
             // fontItalic = p.loadFont('assets/Italic.ttf');
@@ -217,18 +273,41 @@
 
         p.setup = async () => {
             p.createCanvas(CANVAS_SIZE, CANVAS_SIZE);
-            p.clear(0, 0, 0, 0);
-            drawLetter();
+
+            await nextLevel();
+
             // setInterval(nextLevel, 1000);
             // scanLetter();
         };
 
+        nextLevelP5 = () => {
+            p.clear(0, 0, 0, 0);
+
+            drawLetterFlesh();
+            drawLetterSkeleton();
+
+            skeletonPoints = scanLetter();
+        };
+
         p.draw = () => {
             p.clear(0, 0, 0, 0);
-            drawLetter();
-            scanLetter();
-            drawPointsBar();
+
+            drawLetterFlesh();
+            p.fill('#5398AC30');
+            p.textStyle(p.NORMAL);
+            drawLetter(0.85);
+            // drawLetterSkeleton();
+
+            // let green = p.color(100, 200, 200, 150);
+            // for (const po of skeletonPoints) {
+            //     if (!po.bone) continue;
+            //     p.fill(green);
+            //     p.circle(po.x, po.y, 5);
+            // }
+
             drawTrail();
+
+            drawPointsBar();
         };
     };
 </script>
