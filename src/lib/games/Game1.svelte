@@ -5,6 +5,7 @@
 
     import { tweened, spring } from 'svelte/motion';
     import { cubicOut } from 'svelte/easing';
+    import audio from '../audioOverlap';
 
     export let CANVAS_SIZE = 500;
     const LETTERS = 'bcdefhiklnoprstuvxyz'.toUpperCase().split('');
@@ -15,24 +16,39 @@
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+    let state = 0;
     let level = 0;
+    // let level = LETTERS.length - 2;
     $: currentLetter = LETTERS[level];
     let currentRoundPoints = MAX_ROUND_POINTS;
 
-    let trailPoints = [{ x: 0, y: 0, size: 0 }];
+    let trailPoints = [{ x: 0, y: 0, size: 0, consumed: false }];
     let skeletonPoints = [{ x: 0, y: 0, marrow: false }];
-    let fleshPoints = [{ x: 0, y: 0 }];
+    let fleshPoints = [{ x: 0, y: 0, consumed: false }];
+    let statsTracker = {
+        totalBones: 0,
+        totalErrors: 0,
+        totalScore: 0,
+    };
 
     let nextLevelP5;
+    let winSFX;
 
     async function nextLevel(params) {
+        if (level === LETTERS.length - 1) {
+            state = 2;
+            return;
+        }
+
+        statsTracker.totalScore += currentRoundPoints > 0 ? currentRoundPoints : 0;
+
         currentRoundPoints -= currentRoundPoints - MIN_ROUND_POINTS;
         currentRoundPoints = MAX_ROUND_POINTS + POINT_DRAIN_AMOUNT;
 
         level++;
-        trailPoints = [{ x: 0, y: 0, size: 0 }];
+        trailPoints = [{ x: 0, y: 0, size: 0, consumed: false }];
         skeletonPoints = [{ x: 0, y: 0, marrow: false }];
-        fleshPoints = [{ x: 0, y: 0 }];
+        fleshPoints = [{ x: 0, y: 0, consumed: false }];
 
         console.log('Next level');
 
@@ -43,14 +59,20 @@
     // Point drainer
     const slugCurrentRoundPointsStore = spring(0, {
         stiffness: 0.1,
-        damping: 0.5,
+        damping: 0.4,
         // duration: 1500,
         // easing: cubicOut,
     });
 
     onMount(async () => {
+        // winSFX = new Audio('success.mp3');
+        audio.addSFX('win', '/public/success.mp3', 10);
+        audio.addSFX('lose', '/public/error3.mp3', 10);
+
         const drainPointsInterval = setInterval(async () => {
+            if (state !== 1) return;
             if (currentRoundPoints - POINT_DRAIN_AMOUNT < MIN_ROUND_POINTS) {
+                audio.playSFX('lose');
                 await nextLevel();
                 await sleep(POINT_DRAIN_DELAY);
                 // return clearInterval(drainPointsInterval);
@@ -83,7 +105,7 @@
                 // if (!trailPoints.length || dist({ x: p.mouseX, y: p.mouseY }, trailPoints[0]) > 10) {
                 if (p.mouseIsPressed) {
                     // console.log('push' + Math.random().toString().slice(-3, -1));
-                    trailPoints.push({ x: p.mouseX, y: p.mouseY, size: 10 });
+                    trailPoints.push({ x: p.mouseX, y: p.mouseY, size: 10, consumed: false });
                 }
             }
 
@@ -95,15 +117,18 @@
             let voidFilled = 0;
 
             // render points
+            const len = skeletonPoints.length + fleshPoints.length;
             for (let i = 0; i < trailPoints.length; i++) {
                 const point = trailPoints[i];
 
+                let error = false;
                 let fleshed = false;
-                const len = skeletonPoints.length + fleshPoints.length;
+
                 for (let i = 0; i < len; i++) {
                     // loop over each skeleton point
                     const isBone = i < skeletonPoints.length;
-                    const skPoint = isBone ? skeletonPoints[i] : fleshPoints[i - skeletonPoints.length];
+                    const fleshIndex = i - skeletonPoints.length;
+                    const skPoint = isBone ? skeletonPoints[i] : fleshPoints[fleshIndex];
                     // if (!skPoint) continue;
                     const distance = dist(point, skPoint);
 
@@ -119,8 +144,11 @@
                         p.circle(skPoint.x, skPoint.y, 30);
                     } else {
                         if (distance < 20) {
-                            fleshed = true;
                             // we're looking at a piece of flesh
+                            // currentRoundPoints -= 20;
+
+                            fleshed = true;
+
                             continue;
                         }
                         // tighter around flesh
@@ -131,24 +159,20 @@
                         voidFilled++;
                         p.fill(red);
                         p.circle(point.x, point.y, 40);
+                        error = true;
                     }
                 }
 
-                // p.fill(100, 200, 100);
-                // p.circle(point.x, point.y, 20);
-
-                // if (point.size <= 0 && trailPoints.length > 0) trailPoints.shift();
-                // if (point.size > 0) point.size -= 2;
-                // if (i === 0) return;
-
-                // const dec = (30 - point.size) * 0.1;
-
-                // if (point.size - dec <= 5) {
-                //     trailPoints.shift();
-                //     continue;
-                // }
-
-                // if (i !== 0) point.size -= dec;
+                if (error) {
+                    if (!trailPoints[i].consumed) {
+                        // if (i >= skeletonPoints.length && !fleshPoints[fleshIndex].consumed) {
+                        console.log('decrease');
+                        currentRoundPoints -= 10;
+                        statsTracker.totalErrors++;
+                        // currentRoundPoints -= 20;
+                        trailPoints[i].consumed = true;
+                    }
+                }
             }
 
             let bonesFilled = 0;
@@ -160,6 +184,11 @@
                 console.log(bonesFilled, skeletonPoints.length);
                 console.log(bonesFilled, voidFilled);
                 console.log('COMPLETED');
+
+                statsTracker.totalBones += bonesFilled;
+
+                // winSFX.play();() - Ca
+                audio.playSFX('win');
                 await nextLevel();
             }
         };
@@ -193,7 +222,7 @@
                         //     p.fill(red);
                         // }
                     } else if (p.pixels[i] === 214) {
-                        fleshPoints.push({ x, y, bone: false });
+                        fleshPoints.push({ x, y, consumed: false });
                     } else {
                         // if (p.pixels[i] !== 0) {
                         //     continue;
@@ -229,8 +258,6 @@
             p.textFont('Work Sans');
 
             p.text(currentLetter, p.width / 2, p.height / 2);
-
-            p.text(currentLetter, p.width / 2, p.height / 2);
         };
 
         const drawLetterFlesh = () => {
@@ -244,6 +271,46 @@
             p.fill(193, 50, 50);
             p.textStyle(p.NORMAL);
             drawLetter(0.85);
+        };
+
+        const drawStartMenu = () => {
+            const letterColor = p.color(214, 255, 255, 255);
+            p.fill(letterColor);
+            p.textStyle(p.NORMAL);
+            p.textSize(100);
+
+            p.textAlign(p.CENTER, p.CENTER);
+
+            // p.textFont('Lato');
+            p.textFont('Work Sans');
+            // p.background(200, 200, 200);
+
+            const startMessage = 'PLAY';
+
+            p.text(startMessage, p.width / 2, p.height / 2);
+        };
+
+        const drawEndMenu = () => {
+            const letterColor = p.color(214, 255, 255, 255);
+            p.fill(letterColor);
+            p.textStyle(p.BOLD);
+            p.textSize(50);
+
+            p.textAlign(p.CENTER, p.CENTER);
+
+            // p.textFont('Lato');
+            p.textFont('Work Sans');
+            // p.background(200, 200, 200);
+
+            p.text(
+                (100 - (statsTracker.totalErrors / statsTracker.totalBones) * 100).toFixed(1) + '% Accuracy',
+                p.width / 2,
+                p.height / 2
+            );
+
+            p.text('Score ' + statsTracker.totalScore, p.width / 2, p.height / 2 - 100);
+
+            // p.text(statsTracker.totalErrors, p.width / 2, p.height / 2 - 100);
         };
 
         const drawPointsBar = () => {
@@ -296,29 +363,47 @@
             scanLetter();
         };
 
+        p.mouseClicked = () => {
+            if (state === 0) state = 1;
+            if (state === 2) {
+                // level = 0;
+                // state = 1;
+            }
+        };
+
         p.draw = () => {
             p.clear(0, 0, 0, 0);
 
-            // if (score )
-            drawLetterFlesh();
-            p.fill('#5398AC30');
-            p.textStyle(p.NORMAL);
-            drawLetter(0.85);
-            // drawLetterSkeleton();
+            if (state === 0) {
+                drawStartMenu();
+            } else if (state === 1) {
+                // if (score )
+                drawLetterFlesh();
+                p.fill('#5398AC30');
+                p.textStyle(p.NORMAL);
+                drawLetter(0.85);
+                // drawLetterSkeleton();
 
-            // let green = p.color(100, 200, 200, 150);
-            // for (const po of skeletonPoints) {
-            //     if (!po.bone) continue;
-            //     p.fill(green);
-            //     p.circle(po.x, po.y, 5);
-            // }
+                // let green = p.color(100, 200, 200, 150);
+                // for (const po of skeletonPoints) {
+                //     if (!po.bone) continue;
+                //     p.fill(green);
+                //     p.circle(po.x, po.y, 5);
+                // }
 
-            drawTrail();
+                drawTrail();
 
-            drawPointsBar();
+                drawPointsBar();
+            } else if (state === 2) {
+                drawEndMenu();
+            }
         };
     };
 </script>
+
+<!-- <audio src="win.mp3" preload="auto" bind:this={winSFX} controls>
+    <track kind="captions" />
+</audio> -->
 
 <div class=" w-full h-full border-slate-500 border">
     <P5 {sketch} />
