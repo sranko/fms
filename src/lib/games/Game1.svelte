@@ -20,15 +20,19 @@
     let currentRoundPoints = MAX_ROUND_POINTS;
 
     let trailPoints = [{ x: 0, y: 0, size: 0 }];
-    let skeletonPoints = [{ x: 0, y: 0, bone: false }];
-    let boneCount = 0;
+    let skeletonPoints = [{ x: 0, y: 0, marrow: false }];
+    let fleshPoints = [{ x: 0, y: 0 }];
 
     let nextLevelP5;
 
     async function nextLevel(params) {
+        currentRoundPoints -= currentRoundPoints - MIN_ROUND_POINTS;
+        currentRoundPoints = MAX_ROUND_POINTS + POINT_DRAIN_AMOUNT;
+
         level++;
         trailPoints = [{ x: 0, y: 0, size: 0 }];
-        boneCount = 0;
+        skeletonPoints = [{ x: 0, y: 0, marrow: false }];
+        fleshPoints = [{ x: 0, y: 0 }];
 
         console.log('Next level');
 
@@ -47,8 +51,6 @@
     onMount(async () => {
         const drainPointsInterval = setInterval(async () => {
             if (currentRoundPoints - POINT_DRAIN_AMOUNT < MIN_ROUND_POINTS) {
-                currentRoundPoints -= currentRoundPoints - MIN_ROUND_POINTS;
-                currentRoundPoints = MAX_ROUND_POINTS + POINT_DRAIN_AMOUNT;
                 await nextLevel();
                 await sleep(POINT_DRAIN_DELAY);
                 // return clearInterval(drainPointsInterval);
@@ -90,7 +92,6 @@
             const red = p.color(200, 100, 100, 120);
             const green = p.color(100, 200, 200, 40);
 
-            let bonesFilled = 0;
             let voidFilled = 0;
 
             // render points
@@ -98,18 +99,22 @@
                 const point = trailPoints[i];
 
                 let fleshed = false;
-                for (let i = 0; i < skeletonPoints.length; i++) {
+                const len = skeletonPoints.length + fleshPoints.length;
+                for (let i = 0; i < len; i++) {
                     // loop over each skeleton point
-                    const skPoint = skeletonPoints[i];
+                    const isBone = i < skeletonPoints.length;
+                    const skPoint = isBone ? skeletonPoints[i] : fleshPoints[i - skeletonPoints.length];
+                    // if (!skPoint) continue;
                     const distance = dist(point, skPoint);
 
-                    if (skPoint.bone) {
+                    if (isBone) {
                         // ok so its a bone
                         if (distance > 50) {
                             continue;
                         }
 
-                        bonesFilled++;
+                        // bonesFilled++;
+                        skeletonPoints[i].marrow = true;
                         p.fill(green);
                         p.circle(skPoint.x, skPoint.y, 30);
                     } else {
@@ -122,7 +127,7 @@
                         // if (distance < 20) continue;
                     }
 
-                    if (!fleshed && i === skeletonPoints.length - 1) {
+                    if (!fleshed && i === len - 1) {
                         voidFilled++;
                         p.fill(red);
                         p.circle(point.x, point.y, 40);
@@ -146,8 +151,13 @@
                 // if (i !== 0) point.size -= dec;
             }
 
-            if (bonesFilled >= boneCount * 0.99) {
-                console.log(bonesFilled, boneCount);
+            let bonesFilled = 0;
+            for (let i = 0; i < skeletonPoints.length; i++) {
+                if (skeletonPoints[i].marrow) bonesFilled++;
+            }
+
+            if (bonesFilled >= skeletonPoints.length * 0.98) {
+                console.log(bonesFilled, skeletonPoints.length);
                 console.log(bonesFilled, voidFilled);
                 console.log('COMPLETED');
                 await nextLevel();
@@ -169,15 +179,12 @@
             const d = p.pixelDensity();
             p.noStroke();
 
-            boneCount = 0;
-
             for (let x = 0; x < p.width; x += block) {
                 for (let y = 0; y < p.height; y += block) {
                     const i = 4 * d * (y * d * p.width + x);
 
                     if (p.pixels[i] === 193) {
-                        targets.push({ x, y, bone: true });
-                        boneCount++;
+                        skeletonPoints.push({ x, y, marrow: false });
 
                         // if (nearest(x, y, 30)) {
                         //     p.fill(green);
@@ -186,7 +193,7 @@
                         //     p.fill(red);
                         // }
                     } else if (p.pixels[i] === 214) {
-                        targets.push({ x, y, bone: false });
+                        fleshPoints.push({ x, y, bone: false });
                     } else {
                         // if (p.pixels[i] !== 0) {
                         //     continue;
@@ -286,12 +293,13 @@
             drawLetterFlesh();
             drawLetterSkeleton();
 
-            skeletonPoints = scanLetter();
+            scanLetter();
         };
 
         p.draw = () => {
             p.clear(0, 0, 0, 0);
 
+            // if (score )
             drawLetterFlesh();
             p.fill('#5398AC30');
             p.textStyle(p.NORMAL);
