@@ -1,5 +1,7 @@
 <script>
     import Game1 from './games/Game1.svelte';
+    import Game2 from './games/Game2.svelte';
+    import Game3 from './games/Game3.svelte';
 
     export let page;
 </script>
@@ -14,7 +16,7 @@
             <button on:click={_ => (page = 0)}>Home</button>
             {#each { length: 3 } as _, i}
                 {#if page != i + 1}
-                    <button disabled={i != 0} on:click={_ => (page = i + 1)}>Exercise {i + 1}</button>
+                    <button on:click={_ => (page = i + 1)}>Exercise {i + 1}</button>
                 {/if}
             {/each}
         </div>
@@ -22,7 +24,13 @@
 
     <div class="bg-black grid place-items-center relative">
         <div class="col-start-1 row-start-1">
-            <Game1 />
+            {#if page === 1}
+                <Game1 />
+            {:else if page === 2}
+                <Game2 />
+            {:else}
+                <Game3 />
+            {/if}
         </div>
         <!-- <div class="hud w-full h-full bg-red-500 col-start-1 row-start-1  grid "> -->
         <!-- <button class="mt-auto ml-auto">full</button> -->
