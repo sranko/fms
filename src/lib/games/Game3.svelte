@@ -39,7 +39,7 @@
             return;
         }
 
-        state = -1;
+        // state = -1;
 
         statsTracker.totalScore += currentRoundPoints > 0 ? currentRoundPoints : 0;
 
@@ -56,7 +56,7 @@
         await tick();
 
         await sleep(500);
-        state = 1;
+        // state = 1;
 
         nextLevelP5();
     }
