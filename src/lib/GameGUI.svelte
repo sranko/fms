@@ -40,10 +40,20 @@
 <div>
     <div class="prose dark:prose-invert text-left border-t pt-8 mt-8 border-slate-600">
         <h2>How to play</h2>
+
         <ul>
-            <li>Use the mouse to trace the letter displayed on the screen.</li>
-            <li>Stay on the line as best as you can for full points</li>
-            <li>Complete in a timely manner for full points</li>
+            {#if page === 1}
+                <li>Use the mouse to trace the letter displayed on the screen.</li>
+                <li>Stay on the line as best as you can for full points</li>
+                <li>Complete in a timely manner for full points</li>
+            {:else if page === 2}
+                <li>Use the mouse to click the targets displayed on the screen.</li>
+                <li>Complete in a timely manner before time runs out.</li>
+            {:else}
+                <li>Use the mouse to trace the path displayed on the screen.</li>
+                <li>Stay on the line as best as you can for full points</li>
+                <li>Complete in a timely manner for full points</li>
+            {/if}
         </ul>
     </div>
 </div>

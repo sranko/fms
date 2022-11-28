@@ -8,7 +8,6 @@
     import audio from '../audioOverlap';
 
     export let CANVAS_SIZE = 500;
-    const LETTERS = 'bcdefhiklnoprstuvxyz'.toUpperCase().split('');
     const MAX_ROUND_POINTS = 1000;
     const MIN_ROUND_POINTS = 600;
     const POINT_DRAIN_AMOUNT = 100;
@@ -32,6 +31,7 @@
     };
 
     let nextLevelP5;
+    let pause;
 
     async function nextLevel(params) {
         if (level === 11) {
@@ -39,7 +39,7 @@
             return;
         }
 
-        // state = -1;
+        pause = true;
 
         statsTracker.totalScore += currentRoundPoints > 0 ? currentRoundPoints : 0;
 
@@ -55,10 +55,10 @@
 
         await tick();
 
-        await sleep(500);
-        // state = 1;
+        await nextLevelP5();
 
-        nextLevelP5();
+        await sleep(500);
+        pause = false;
     }
 
     // Point drainer
@@ -106,7 +106,7 @@
         const drawTrail = async () => {
             p.noStroke();
 
-            if (dist({ x: p.mouseX, y: p.mouseY }, trailPoints.at(-1)) > 5) {
+            if (!pause && dist({ x: p.mouseX, y: p.mouseY }, trailPoints.at(-1)) > 5) {
                 // if (!trailPoints.length || dist({ x: p.mouseX, y: p.mouseY }, trailPoints[0]) > 10) {
                 if (p.mouseIsPressed) {
                     // console.log('push' + Math.random().toString().slice(-3, -1));
@@ -146,7 +146,7 @@
                         // bonesFilled++;
                         skeletonPoints[i].marrow = true;
                         p.fill(green);
-                        p.circle(skPoint.x, skPoint.y, 20);
+                        p.circle(skPoint.x, skPoint.y, 18);
                     } else {
                         if (distance < 20) {
                             // we're looking at a piece of flesh
@@ -160,7 +160,7 @@
                         // if (distance < 20) continue;
                     }
 
-                    if (!fleshed && i === len - 1) {
+                    if (!pause && !fleshed && i === len - 1) {
                         voidFilled++;
                         p.fill(red);
                         p.circle(point.x, point.y, 40);

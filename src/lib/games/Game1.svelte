@@ -32,6 +32,7 @@
     };
 
     let nextLevelP5;
+    let pause = false;
     let winSFX;
 
     async function nextLevel(params) {
@@ -39,6 +40,8 @@
             state = 2;
             return;
         }
+
+        pause = true;
 
         statsTracker.totalScore += currentRoundPoints > 0 ? currentRoundPoints : 0;
 
@@ -53,7 +56,9 @@
         console.log('Next level');
 
         await tick();
-        nextLevelP5();
+        await nextLevelP5();
+        await sleep(500);
+        pause = false;
     }
 
     // Point drainer
@@ -101,7 +106,7 @@
         const drawTrail = async () => {
             p.noStroke();
 
-            if (dist({ x: p.mouseX, y: p.mouseY }, trailPoints.at(-1)) > 5) {
+            if (!pause && dist({ x: p.mouseX, y: p.mouseY }, trailPoints.at(-1)) > 5) {
                 // if (!trailPoints.length || dist({ x: p.mouseX, y: p.mouseY }, trailPoints[0]) > 10) {
                 if (p.mouseIsPressed) {
                     // console.log('push' + Math.random().toString().slice(-3, -1));
@@ -155,7 +160,7 @@
                         // if (distance < 20) continue;
                     }
 
-                    if (!fleshed && i === len - 1) {
+                    if (!pause && !fleshed && i === len - 1) {
                         voidFilled++;
                         p.fill(red);
                         p.circle(point.x, point.y, 40);
