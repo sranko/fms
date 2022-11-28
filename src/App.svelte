@@ -1,5 +1,5 @@
 <script>
-    let page = 2;
+    let page = 0;
     import Game from './lib/GameGUI.svelte';
 </script>
 
