@@ -69,25 +69,23 @@
         // easing: cubicOut,
     });
 
-    onMount(async () => {
-        // winSFX = new Audio('success.mp3');
-        audio.addSFX('win', '/success.mp3', 10);
-        audio.addSFX('lose', '/error3.mp3', 10);
+    // winSFX = new Audio('success.mp3');
+    audio.addSFX('win', '/success.mp3', 10);
+    audio.addSFX('lose', '/error3.mp3', 10);
 
-        const drainPointsInterval = setInterval(async () => {
-            if (state !== 1) return;
-            if (currentRoundPoints - POINT_DRAIN_AMOUNT < MIN_ROUND_POINTS) {
-                audio.playSFX('lose');
-                await nextLevel();
-                await sleep(POINT_DRAIN_DELAY);
-                // return clearInterval(drainPointsInterval);
-            }
-            currentRoundPoints -= POINT_DRAIN_AMOUNT;
-        }, POINT_DRAIN_DELAY);
+    const drainPointsInterval = setInterval(async () => {
+        if (state !== 1) return;
+        if (currentRoundPoints - POINT_DRAIN_AMOUNT < MIN_ROUND_POINTS) {
+            audio.playSFX('lose');
+            await nextLevel();
+            await sleep(POINT_DRAIN_DELAY);
+            // return clearInterval(drainPointsInterval);
+        }
+        currentRoundPoints -= POINT_DRAIN_AMOUNT;
+    }, POINT_DRAIN_DELAY);
 
-        return () => {
-            clearInterval(drainPointsInterval);
-        };
+    onDestroy(() => {
+        clearInterval(drainPointsInterval);
     });
 
     // Distance func
