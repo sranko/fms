@@ -71,8 +71,8 @@
 
     onMount(async () => {
         // winSFX = new Audio('success.mp3');
-        audio.addSFX('win', '/public/success.mp3', 10);
-        audio.addSFX('lose', '/public/error3.mp3', 10);
+        audio.addSFX('win', '/success.mp3', 10);
+        audio.addSFX('lose', '/error3.mp3', 10);
 
         const drainPointsInterval = setInterval(async () => {
             if (state !== 1) return;
