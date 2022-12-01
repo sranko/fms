@@ -14,7 +14,7 @@
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-    let state = 1;
+    let state = 0;
     let level = 0;
     let currentRoundPoints = MAX_ROUND_POINTS;
 
