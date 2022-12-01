@@ -9,7 +9,7 @@
 
         <div class="flex flex-col gap-y-4 mt-12 w-full">
             {#each { length: 3 } as _, i}
-                <button on:click={_ => (page = i + 1)}>Exercise {i + 1}</button>
+                <button class="bg-sky-800" on:click={_ => (page = i + 1)}>Exercise {i + 1}</button>
             {/each}
         </div>
     </main>

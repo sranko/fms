@@ -304,6 +304,21 @@
                 drawTrail();
 
                 drawPointsBar();
+
+                const letterColor = p.color(214, 255, 255, 255);
+                p.fill(letterColor);
+                p.textStyle(p.NORMAL);
+                p.textSize(100);
+
+                p.textAlign(p.CENTER, p.CENTER);
+
+                // p.textFont('Lato');
+                p.textFont('Work Sans');
+                // p.background(200, 200, 200);
+
+                const startMessage = statsTracker.totalBones;
+
+                p.text(startMessage, p.width - 50, 80);
             } else if (state === 2) {
                 drawEndMenu();
             }

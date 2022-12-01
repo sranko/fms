@@ -114,8 +114,8 @@
 
             // trailPoints.push({ x: p.mouseX, y: p.mouseY, size: 40 });
 
-            const red = p.color(200, 100, 100, 120);
-            const green = p.color(100, 200, 200, 40);
+            const red = p.color(200, 100, 100, 200);
+            const green = p.color(40, 200, 120, 40);
 
             let voidFilled = 0;
 
