@@ -13,10 +13,12 @@
 <div class="flex flex-row w-full mx-0">
     <div class="p-4 border-none border-slate-700">
         <div class="flex flex-col gap-y-4  flex-shrink">
-            <button class="bg-sky-800" on:click={_ => (page = 0)}>Home</button>
+            <button class="bg-sky-800 hover:scale-105 transition-transform" on:click={_ => (page = 0)}>Home</button>
             {#each { length: 3 } as _, i}
                 {#if page != i + 1}
-                    <button class="bg-sky-800" on:click={_ => (page = i + 1)}>Exercise {i + 1}</button>
+                    <button class="bg-sky-800 hover:scale-105 transition-transform" on:click={_ => (page = i + 1)}>
+                        Exercise {i + 1}
+                    </button>
                 {/if}
             {/each}
         </div>
@@ -53,6 +55,7 @@
                 <li>Use the mouse to trace the path displayed on the screen.</li>
                 <li>Stay on the line as best as you can for full points</li>
                 <li>Complete in a timely manner for full points</li>
+                <li>Difficulty of the path progressively increases!</li>
             {/if}
         </ul>
     </div>
