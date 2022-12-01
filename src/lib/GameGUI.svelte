@@ -38,8 +38,8 @@
     </div>
 </div>
 <div>
-    <div class="prose dark:prose-invert text-left text-white text-xl font-bold border-t pt-8 mt-8 border-slate-600">
-        <h2>How to play</h2>
+    <div class="prose text-left text-white text-xl font-bold border-t pt-8 mt-8 border-slate-600">
+        <h2 class="text-white">How to play</h2>
 
         <ul>
             {#if page === 1}
