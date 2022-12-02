@@ -98,8 +98,8 @@
         // easing: cubicOut,
     });
 
-    audio.addSFX('win', 'success.mp3', 10);
-    audio.addSFX('lose', 'error3.mp3', 10);
+    audio.addSFX('win', 'audio/success.mp3', 10);
+    audio.addSFX('lose', 'audio/error3.mp3', 10);
 
     const drainPointsInterval = setInterval(async () => {
         if (state !== 1) return;
