@@ -121,8 +121,8 @@
     });
 
     // load the sound effects
-    audio.addSFX('win', '/success.mp3', 10);
-    audio.addSFX('lose', '/error3.mp3', 10);
+    audio.addSFX('win', 'success.mp3', 10);
+    audio.addSFX('lose', 'error3.mp3', 10);
 
     // runs every n miliseconds to decrement time and points
     const drainPointsInterval = setInterval(async () => {
