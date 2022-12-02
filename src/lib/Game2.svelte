@@ -1,4 +1,27 @@
 <script>
+    /**
+     * Technical Comments
+     * We took a timeless game concept and improved it for toddlers developing FMS
+     * Instead of targets appearing randomly everywhere on the screen,
+     * we limit the next target to be within a radius of the last target
+     * this helps a toddler trust their motor skill response and train the coordination better,
+     * because they are able to focus on predicitng where the next target would be
+     *
+     * We generate the new coordinates by using right triangle laws
+     * and some triganometry concepts
+     * We generate a random angle, then solve for the triangle with a specific hypothenuse
+     * Then, we add this new triangle to the last targets coordinates to get the new coordinates
+     * Then we spawn the new circle there, instead of simply choosing random confusing coordinates anywhere on the canvas
+     *
+     * We use animations in order to help toddlers follow along better with what's happening,
+     * by mimicking how objects behave in the real world
+     * Instead of the targets appearing and dissapearing, we add attractive animations
+     * This means toddlers see what is going on and have a visual cue on what to do
+     *
+     * we have a bar in the top representing the time remaining, that changes color as time runs out
+     * this is a good visual representation
+     */
+
     /** @type { import('p5-svelte/types').p5 } */
     import P5 from 'p5-svelte';
     import { onDestroy, onMount, tick } from 'svelte';
@@ -31,9 +54,6 @@
     };
 
     let nextLevelP5;
-    let winSFX;
-
-    let angle = 0;
 
     async function nextLevel(params) {
         if (level >= 20) {
@@ -78,7 +98,6 @@
         // easing: cubicOut,
     });
 
-    // winSFX = new Audio('success.mp3');
     audio.addSFX('win', '/success.mp3', 10);
     audio.addSFX('lose', '/error3.mp3', 10);
 
@@ -87,7 +106,6 @@
         if (currentRoundPoints - POINT_DRAIN_AMOUNT < MIN_ROUND_POINTS) {
             audio.playSFX('lose');
             state = 2;
-            // return clearInterval(drainPointsInterval);
         }
         currentRoundPoints -= POINT_DRAIN_AMOUNT;
     }, POINT_DRAIN_DELAY);
@@ -109,8 +127,7 @@
             barBG: p.color(255, 255, 255),
         };
 
-        const nop = () => (Math.random() < 0.5 ? 1 : -1);
-
+        // Solve a triangle in order to relocate a point smartly
         const relocate = () => {
             // const hypothenuse = getRandomArbitrary(100, 150);
             const hypo = 120;
@@ -175,14 +192,7 @@
             }
         };
 
-        const nearest = (x, y, radius = 20) => {
-            for (let i = 0; i < trailPoints.length; i++) {
-                const point = trailPoints[i];
-                if (dist({ x, y }, point) < radius) {
-                    return trailPoints[i];
-                }
-            }
-        };
+        // Functions to paint the required shapes like the targets and menus
 
         const drawTarget = (x, y, size) => {
             p.strokeWeight(4);
@@ -199,9 +209,7 @@
 
             p.textAlign(p.CENTER, p.CENTER);
 
-            // p.textFont('Lato');
             p.textFont('Work Sans');
-            // p.background(200, 200, 200);
 
             const startMessage = 'PLAY';
 
@@ -216,9 +224,7 @@
 
             p.textAlign(p.CENTER, p.CENTER);
 
-            // p.textFont('Lato');
             p.textFont('Work Sans');
-            // p.background(200, 200, 200);
 
             p.text('Score ' + statsTracker.totalBones, p.width / 2, p.height / 2 - 100);
 
@@ -236,17 +242,6 @@
             const percent = end / p.width;
             p.fill(100, 255, 50);
             p.rect(0, 0, end, barWidth);
-
-            return;
-
-            p.fill(COLORS.barScoreBG);
-            p.ellipse(end, 10, 50, 40);
-
-            p.textSize(20);
-            p.textAlign(p.CENTER, p.TOP);
-            p.fill(COLORS.barScore);
-
-            p.text(currentRoundPoints, end, 0);
         };
 
         const drawTargets = () => {
@@ -254,21 +249,10 @@
             if (show) drawTarget(targetB.x, targetB.y, trans ? targetB.size : $slugShrinkerStoreB);
         };
 
-        let fontRegular, fontItalic, fontBold;
-
-        p.preload = async () => {
-            // fontRegular = p.loadFont('assets/Regular.otf');
-            // fontItalic = p.loadFont('assets/Italic.ttf');
-            // fontBold = p.loadFont('assets/Bold.ttf');
-        };
-
         p.setup = async () => {
             p.createCanvas(CANVAS_SIZE, CANVAS_SIZE);
 
             await nextLevel();
-
-            // setInterval(nextLevel, 1000);
-            // scanLetter();
         };
 
         nextLevelP5 = () => {
@@ -292,14 +276,6 @@
                 drawStartMenu();
             } else if (state === 1) {
                 drawTargets();
-                // drawLetterSkeleton();
-
-                // let green = p.color(100, 200, 200, 150);
-                // for (const po of skeletonPoints) {
-                //     if (!po.bone) continue;
-                //     p.fill(green);
-                //     p.circle(po.x, po.y, 5);
-                // }
 
                 drawTrail();
 
@@ -312,9 +288,7 @@
 
                 p.textAlign(p.CENTER, p.CENTER);
 
-                // p.textFont('Lato');
                 p.textFont('Work Sans');
-                // p.background(200, 200, 200);
 
                 const startMessage = statsTracker.totalBones;
 

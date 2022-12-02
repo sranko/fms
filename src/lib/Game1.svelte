@@ -1,4 +1,53 @@
 <script>
+    /**
+     * Technical Comments
+     *
+     * How the points timer bar works:
+     * We redraw the bar each frame with a smooth animation
+     * This is an innovative combination of points and time left for the level, inspired by quizziz ui
+     * We use the visual display of time and points instead of plain text because toddlers are more visual learners,
+     * and will understand this representation of points better
+     * This reduces the clutter on the screen, allowing them to focus more on the game
+     *
+     *
+     * How letter tracing works:
+     * The goal is to create an engaing experience that's fair for toddlers
+     * We draw every single letter 2 times
+     * One time is drawn thin font
+     * The other time is drawn in thick font
+     * This allows us to perform nice collision
+     *
+     * We have a large allowable margin of error for the thin line,
+     * which is about the radius of the thick letter font weight in pixels
+     *
+     * This thin like is called the skeleton, while the thicker letter is the flesh.
+     * This naming convention is used to simplify variable names via a biological analogy
+     *
+     * After we draw both of these variants of the letter for that level,
+     * we scan across the pixels in the canvas,
+     * looking for the pixel colors of the skeleton and flesh,
+     * and pushing those values to their own arrays respectivly
+     *
+     * Now, as the user moves the mouse arround,
+     * we push the coordinates of the mouse to an array representing the path drawn
+     * if the current coordinates are too close to the previous coordinates already drawn,
+     * we skip adding that trail point to reduce duplication and improve iteration performance
+     *
+     * Now we have 3 main arrays:
+     * Unique trail points, skeleton points, and flesh points
+     * (Refer to brief comments above for naming convention)
+     *
+     * Next, everytime a new trail point is created, we perform several checks to determine collision context
+     * If the trail point is within a radius of the skeleton, we set that skeleton point to be active
+     * else if the trail point is *not* within a safety threshold of the flesh, that means we're outside of the letter,
+     * and set that trail point to an active error
+     *
+     * This allows us to snap the path cleanly to the letter when you're on track,
+     * and show you your real wrong path when you're off track
+     *
+     * Last, on each frame we look over the arrays and render all of the active skeleton points and error trail points
+     */
+
     /** @type { import('p5-svelte/types').p5 } */
     import P5 from 'p5-svelte';
     import { onDestroy, onMount, tick } from 'svelte';

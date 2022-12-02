@@ -1,4 +1,14 @@
 <script>
+    /**
+     * The GUI is responsible for the layout of the game
+     * We have a convenient menu to the homescreen and to all the other games at all times
+     * The GUI renders each correct game as it's requested,
+     * and set of directions as it's requested
+     * We also show the current title of the game
+     * This helps us create a clean and accessible user interface
+     */
+
+    // Import our game files
     import Game1 from './Game1.svelte';
     import Game2 from './Game2.svelte';
     import Game3 from './Game3.svelte';
@@ -6,10 +16,12 @@
     export let page;
 </script>
 
+<!-- The title of the game -->
 <h1 class="mb-12">
     Excercise {page}
 </h1>
 
+<!-- Display the menu buttons linking to each game and back home  -->
 <div class="flex flex-row w-full mx-0">
     <div class="p-4 border-none border-slate-700">
         <div class="flex flex-col gap-y-4  flex-shrink">
@@ -24,6 +36,7 @@
         </div>
     </div>
 
+    <!-- Render the right game based on what page is selected to show -->
     <div class="bg-sky-900 grid place-items-center relative">
         <div class="col-start-1 row-start-1">
             {#if page === 1}
@@ -34,15 +47,13 @@
                 <Game3 />
             {/if}
         </div>
-        <!-- <div class="hud w-full h-full bg-red-500 col-start-1 row-start-1  grid "> -->
-        <!-- <button class="mt-auto ml-auto">full</button> -->
-        <!-- </div> -->
     </div>
 </div>
+
+<!-- Render the correct directions based on what page is selected to show -->
 <div>
     <div class="prose text-left text-white text-xl font-bold border-t pt-8 mt-8 border-slate-600">
         <h2 class="text-white">How to play</h2>
-
         <ul>
             {#if page === 1}
                 <li>Use the mouse to trace the letter displayed on the screen.</li>

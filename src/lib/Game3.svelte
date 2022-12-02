@@ -1,10 +1,68 @@
 <script>
+    /**
+     * Technical Comments
+     *
+     * How Path generation works:
+     * The goal is to create an engaging training experience fair for todlers
+     * We accomplish this by generating our path intelligently
+     * Instead of random difficult paths, we came up with an algorithim for clean paths of dyamic difficulty
+     * We start from the center of the screen height wise, at x = 0
+     * We then generate a random offset within the bounds of the screen based on the difficulty determined by the level
+     * This allows us to start from a more or less staight path, and increase in curves
+     * We use the p5js curve function to create these curves dynamically from a set of coordinates
+     * This creates paths that are more human to trace and help a toddler with patterns and intution while drawing
+     *
+     * How the points timer bar works:
+     * We redraw the bar each frame with a smooth animation
+     * This is an innovative combination of points and time left for the level, inspired by quizziz ui
+     * We use the visual display of time and points instead of plain text because toddlers are more visual learners,
+     * and will understand this representation of points better
+     * This reduces the clutter on the screen, allowing them to focus more on the game
+     *
+     * How path tracing collision works:
+     * We paint every path 2 times
+     * One time is drawn in a thin stroke weight
+     * The other time is drawn in thick stroke weight
+     * This allows us to perform nice and forgiving collision for toddlers
+     * These are similiar intelligent collision mechanics as used
+     * (Helps mantain uniform look and feel throughout our games)
+     *
+     * We have a large allowable margin of error for the thin line,
+     * which is about the radius of the thick path stroke weight in pixels
+     *
+     * This thin like is called the skeleton, while the thicker path is the flesh.
+     * This naming convention is used to simplify variable names via a biological analogy
+     *
+     * After we draw both of these variants of the path for that level,
+     * we scan across the pixels in the canvas,
+     * looking for the pixel colors of the skeleton and flesh,
+     * and pushing those values to their own arrays respectivly
+     *
+     * Now, as the user moves the mouse arround,
+     * we push the coordinates of the mouse to an array representing the path drawn
+     * if the current coordinates are too close to the previous coordinates already drawn,
+     * we skip adding that trail point to reduce duplication and improve iteration performance
+     *
+     * Now we have 3 main arrays:
+     * Unique trail points, skeleton points, and flesh points
+     * (Refer to brief comments above for naming convention)
+     *
+     * Next, everytime a new trail point is created, we perform several checks to determine collision context
+     * If the trail point is within a radius of the skeleton, we set that skeleton point to be active
+     * else if the trail point is *not* within a safety threshold of the flesh, that means we're outside of the path,
+     * and set that trail point to an active error
+     *
+     * This allows us to snap the path cleanly to the path when you're on track,
+     * and show you your real wrong path when you're off track
+     *
+     * Last, on each frame we look over the arrays and render all of the active skeleton points and error trail points
+     */
+
     /** @type { import('p5-svelte/types').p5 } */
     import P5 from 'p5-svelte';
     import { onDestroy, onMount, tick } from 'svelte';
 
     import { tweened, spring } from 'svelte/motion';
-    import { cubicOut } from 'svelte/easing';
     import audio from './audioOverlap';
 
     export let CANVAS_SIZE = 500;
@@ -101,6 +159,7 @@
             barBG: p.color(255, 255, 255),
         };
 
+        // Create the trail points as described above
         const drawTrail = async () => {
             p.noStroke();
 
@@ -217,25 +276,9 @@
 
                     if (p.pixels[i] === 193) {
                         skeletonPoints.push({ x, y, marrow: false });
-
-                        // if (nearest(x, y, 30)) {
-                        //     p.fill(green);
-                        //     p.circle(x, y, 5);
-                        // } else {
-                        //     p.fill(red);
-                        // }
                     } else if (p.pixels[i] === 214) {
                         fleshPoints.push({ x, y, consumed: false });
                     } else {
-                        // if (p.pixels[i] !== 0) {
-                        //     continue;
-                        // }
-                        // if (nearest(x, y, 4)) {
-                        //     p.fill(green);
-                        //     p.circle(x, y, 20);
-                        // } else {
-                        //     p.fill(red);
-                        // }
                     }
                 }
             }
@@ -243,33 +286,13 @@
             return targets;
         };
 
-        const nearest = (x, y, radius = 20) => {
-            for (let i = 0; i < trailPoints.length; i++) {
-                const point = trailPoints[i];
-                if (dist({ x, y }, point) < radius) {
-                    return trailPoints[i];
-                }
-            }
-        };
-
+        // We use the P5 js curve function to draw smooth path between coordinates
         const drawLetter = () => {
-            // points is an array of y and x values?
-
-            // let coords = [40, 40, 80, 60, 100, 100, 60, 120, 50, 150];
+            // points is an array of y and x values
 
             p.noFill();
-            // p.stroke(255, 255, 255);
-            // p.strokeWeight(4);
 
             p.beginShape();
-
-            // p.curveVertex(40, 40);
-            // p.curveVertex(40, 40);
-            // p.curveVertex(80, 60);
-            // p.curveVertex(100, 100);
-            // p.curveVertex(60, 120);
-            // p.curveVertex(50, 150);
-            // p.curveVertex(50, 150);
 
             p.curveVertex(coords[0], coords[1]);
             for (let i = 0; i < coords.length; i += 2) {
@@ -343,6 +366,7 @@
             // p.text(statsTracker.totalErrors, p.width / 2, p.height / 2 - 100);
         };
 
+        // Points value with a proxy to introduce animation
         const drawPointsBar = () => {
             slugCurrentRoundPointsStore.set(currentRoundPoints);
             const end = (($slugCurrentRoundPointsStore - MIN_ROUND_POINTS) / (MAX_ROUND_POINTS - MIN_ROUND_POINTS)) * p.width;
@@ -354,17 +378,6 @@
             const percent = end / p.width;
             p.fill((1 - percent) * 255, percent * 255, 50);
             p.rect(0, 0, end, barWidth);
-
-            return;
-
-            p.fill(COLORS.barScoreBG);
-            p.ellipse(end, 10, 50, 40);
-
-            p.textSize(20);
-            p.textAlign(p.CENTER, p.TOP);
-            p.fill(COLORS.barScore);
-
-            p.text(currentRoundPoints, end, 0);
         };
 
         function getRandomArbitrary(min, max) {
@@ -387,21 +400,10 @@
             return out;
         }
 
-        let fontRegular, fontItalic, fontBold;
-
-        p.preload = async () => {
-            // fontRegular = p.loadFont('assets/Regular.otf');
-            // fontItalic = p.loadFont('assets/Italic.ttf');
-            // fontBold = p.loadFont('assets/Bold.ttf');
-        };
-
         p.setup = async () => {
             p.createCanvas(CANVAS_SIZE, CANVAS_SIZE);
 
             await nextLevel();
-
-            // setInterval(nextLevel, 1000);
-            // scanLetter();
         };
 
         nextLevelP5 = () => {
