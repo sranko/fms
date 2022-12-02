@@ -4,9 +4,9 @@
     import { onDestroy, onMount, tick } from 'svelte';
 
     import { tweened, spring } from 'svelte/motion';
-    import { cubicOut } from 'svelte/easing';
     import audio from '../audioOverlap';
 
+    // setup constants
     export let CANVAS_SIZE = 500;
     const LETTERS = 'bcdefhiklnoprstuvxyz'.toUpperCase().split('');
     const MAX_ROUND_POINTS = 1000;
@@ -22,6 +22,7 @@
     $: currentLetter = LETTERS[level];
     let currentRoundPoints = MAX_ROUND_POINTS;
 
+    // setup data storage
     let trailPoints = [{ x: 0, y: 0, size: 0, consumed: false }];
     let skeletonPoints = [{ x: 0, y: 0, marrow: false }];
     let fleshPoints = [{ x: 0, y: 0, consumed: false }];
@@ -31,10 +32,11 @@
         totalScore: 0,
     };
 
+    // setup control variables
     let nextLevelP5;
     let pause = false;
-    let winSFX;
 
+    // resets states, increments points and signals to move on to the next round
     async function nextLevel(params) {
         if (level === LETTERS.length - 1) {
             state = 2;
@@ -61,7 +63,7 @@
         pause = false;
     }
 
-    // Point drainer
+    // Point drainer smooth animation proxy
     const slugCurrentRoundPointsStore = spring(0, {
         stiffness: 0.1,
         damping: 0.4,
@@ -69,10 +71,11 @@
         // easing: cubicOut,
     });
 
-    // winSFX = new Audio('success.mp3');
+    // load the sound effects
     audio.addSFX('win', '/success.mp3', 10);
     audio.addSFX('lose', '/error3.mp3', 10);
 
+    // runs every n miliseconds to decrement time and points
     const drainPointsInterval = setInterval(async () => {
         if (state !== 1) return;
         if (currentRoundPoints - POINT_DRAIN_AMOUNT < MIN_ROUND_POINTS) {
@@ -84,6 +87,7 @@
         currentRoundPoints -= POINT_DRAIN_AMOUNT;
     }, POINT_DRAIN_DELAY);
 
+    // when game changes
     onDestroy(() => {
         clearInterval(drainPointsInterval);
     });
@@ -91,6 +95,7 @@
     // Distance func
     const dist = (p1, p2) => Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
 
+    // Rendering methods
     /** @type { import('p5-svelte/types').Sketch } TypeScript syntax */
     const sketch = p => {
         // Rendering with p5 js
@@ -101,19 +106,18 @@
             barBG: p.color(255, 255, 255),
         };
 
+        // only runs after significant movement to avoid drawing new trail in the same spot
         const drawTrail = async () => {
             p.noStroke();
 
+            // if playing and the mouse has traveled more than 5 pixels
             if (!pause && dist({ x: p.mouseX, y: p.mouseY }, trailPoints.at(-1)) > 5) {
-                // if (!trailPoints.length || dist({ x: p.mouseX, y: p.mouseY }, trailPoints[0]) > 10) {
                 if (p.mouseIsPressed) {
-                    // console.log('push' + Math.random().toString().slice(-3, -1));
                     trailPoints.push({ x: p.mouseX, y: p.mouseY, size: 10, consumed: false });
                 }
             }
 
-            // trailPoints.push({ x: p.mouseX, y: p.mouseY, size: 40 });
-
+            // store colors
             const red = p.color(200, 100, 100, 200);
             const green = p.color(40, 200, 120, 40);
 
@@ -141,23 +145,22 @@
                             continue;
                         }
 
-                        // bonesFilled++;
+                        // act on the detected skeleton point
                         skeletonPoints[i].marrow = true;
                         p.fill(green);
                         p.circle(skPoint.x, skPoint.y, 30);
                     } else {
                         if (distance < 20) {
                             // we're looking at a piece of flesh
-                            // currentRoundPoints -= 20;
 
                             fleshed = true;
 
                             continue;
                         }
                         // tighter around flesh
-                        // if (distance < 20) continue;
                     }
 
+                    // if playing and not yet detected then show as error
                     if (!pause && !fleshed && i === len - 1) {
                         voidFilled++;
                         p.fill(red);
@@ -217,25 +220,8 @@
 
                     if (p.pixels[i] === 193) {
                         skeletonPoints.push({ x, y, marrow: false });
-
-                        // if (nearest(x, y, 30)) {
-                        //     p.fill(green);
-                        //     p.circle(x, y, 5);
-                        // } else {
-                        //     p.fill(red);
-                        // }
                     } else if (p.pixels[i] === 214) {
                         fleshPoints.push({ x, y, consumed: false });
-                    } else {
-                        // if (p.pixels[i] !== 0) {
-                        //     continue;
-                        // }
-                        // if (nearest(x, y, 4)) {
-                        //     p.fill(green);
-                        //     p.circle(x, y, 20);
-                        // } else {
-                        //     p.fill(red);
-                        // }
                     }
                 }
             }
@@ -243,23 +229,11 @@
             return targets;
         };
 
-        const nearest = (x, y, radius = 20) => {
-            for (let i = 0; i < trailPoints.length; i++) {
-                const point = trailPoints[i];
-                if (dist({ x, y }, point) < radius) {
-                    return trailPoints[i];
-                }
-            }
-        };
-
         const drawLetter = (sizeValue = 1) => {
             const size = 500;
             p.textSize(size * sizeValue);
             p.textAlign(p.CENTER, p.CENTER);
-
-            // p.textFont('Lato');
             p.textFont('Work Sans');
-
             p.text(currentLetter, p.width / 2, p.height / 2);
         };
 
@@ -281,15 +255,9 @@
             p.fill(letterColor);
             p.textStyle(p.NORMAL);
             p.textSize(100);
-
             p.textAlign(p.CENTER, p.CENTER);
-
-            // p.textFont('Lato');
             p.textFont('Work Sans');
-            // p.background(200, 200, 200);
-
             const startMessage = 'PLAY';
-
             p.text(startMessage, p.width / 2, p.height / 2);
         };
 
@@ -298,22 +266,14 @@
             p.fill(letterColor);
             p.textStyle(p.BOLD);
             p.textSize(50);
-
             p.textAlign(p.CENTER, p.CENTER);
-
-            // p.textFont('Lato');
             p.textFont('Work Sans');
-            // p.background(200, 200, 200);
-
             p.text(
                 (100 - (statsTracker.totalErrors / statsTracker.totalBones) * 100).toFixed(1) + '% Accuracy',
                 p.width / 2,
                 p.height / 2
             );
-
             p.text('Score ' + statsTracker.totalScore, p.width / 2, p.height / 2 - 100);
-
-            // p.text(statsTracker.totalErrors, p.width / 2, p.height / 2 - 100);
         };
 
         const drawPointsBar = () => {
@@ -327,34 +287,11 @@
             const percent = end / p.width;
             p.fill((1 - percent) * 255, percent * 255, 50);
             p.rect(0, 0, end, barWidth);
-
-            return;
-
-            p.fill(COLORS.barScoreBG);
-            p.ellipse(end, 10, 50, 40);
-
-            p.textSize(20);
-            p.textAlign(p.CENTER, p.TOP);
-            p.fill(COLORS.barScore);
-
-            p.text(currentRoundPoints, end, 0);
-        };
-
-        let fontRegular, fontItalic, fontBold;
-
-        p.preload = async () => {
-            // fontRegular = p.loadFont('assets/Regular.otf');
-            // fontItalic = p.loadFont('assets/Italic.ttf');
-            // fontBold = p.loadFont('assets/Bold.ttf');
         };
 
         p.setup = async () => {
             p.createCanvas(CANVAS_SIZE, CANVAS_SIZE);
-
             await nextLevel();
-
-            // setInterval(nextLevel, 1000);
-            // scanLetter();
         };
 
         nextLevelP5 = () => {
@@ -380,19 +317,10 @@
             if (state === 0) {
                 drawStartMenu();
             } else if (state === 1) {
-                // if (score )
                 drawLetterFlesh();
                 p.fill('#5398AC30');
                 p.textStyle(p.NORMAL);
                 drawLetter(0.85);
-                // drawLetterSkeleton();
-
-                // let green = p.color(100, 200, 200, 150);
-                // for (const po of skeletonPoints) {
-                //     if (!po.bone) continue;
-                //     p.fill(green);
-                //     p.circle(po.x, po.y, 5);
-                // }
 
                 drawTrail();
 
@@ -403,10 +331,6 @@
         };
     };
 </script>
-
-<!-- <audio src="win.mp3" preload="auto" bind:this={winSFX} controls>
-    <track kind="captions" />
-</audio> -->
 
 <div class=" w-full h-full border-slate-500 border">
     <P5 {sketch} />
