@@ -1,7 +1,7 @@
 <script>
-    import Game1 from './games/Game1.svelte';
-    import Game2 from './games/Game2.svelte';
-    import Game3 from './games/Game3.svelte';
+    import Game1 from './Game1.svelte';
+    import Game2 from './Game2.svelte';
+    import Game3 from './Game3.svelte';
 
     export let page;
 </script>

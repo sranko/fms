@@ -4,7 +4,7 @@
     import { onDestroy, onMount, tick } from 'svelte';
 
     import { tweened, spring } from 'svelte/motion';
-    import audio from '../audioOverlap';
+    import audio from './audioOverlap';
 
     export let CANVAS_SIZE = 500;
     const MAX_ROUND_POINTS = 1000;
